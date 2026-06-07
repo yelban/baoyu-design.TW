@@ -2,9 +2,9 @@
 
 **Run Claude Design on your own local agent — Cursor, Claude Code, Claude Desktop, or any file‑capable coding agent.**
 
-[English](README.md) · [简体中文](README.zh-CN.md)
+[English](README.md) · [简体中文](README.zh-CN.md) · [Changelog](CHANGELOG.md)
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Best with Opus 4.8](https://img.shields.io/badge/Best%20with-Opus%204.8-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code-supported-1f6feb)
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg) ![Best with Opus 4.8](https://img.shields.io/badge/Best%20with-Opus%204.8-d97757) ![Harness](https://img.shields.io/badge/Cursor%20%C2%B7%20Claude%20Code%20%C2%B7%20Codex-supported-1f6feb)
 
 `baoyu-design` packages **Claude Design** — the design engine behind [claude.ai/design](https://claude.ai/design) — as a portable **Agent Skill**. Drop it into a local agent and you get most of what the website does, right inside your editor: polished UI mockups, interactive prototypes, wireframes, landing pages, dashboards, mobile apps, and slide decks — all produced as self‑contained HTML.
 
@@ -16,7 +16,7 @@ No website, no separate subscription, no upload step. The agent already on your 
 
 - **Free yourself from the website.** You get the vast majority of `claude.ai/design`'s capabilities without ever leaving your editor — same methodology, same craft standards, same output format.
 - **Best with Opus 4.8.** The skill is a long, demanding design brief; the stronger the model, the better the result. Pair it with **Claude Opus 4.8** for the best output, and it still works well on other capable models.
-- **Iterate by pointing, not describing.** Because the deliverable is plain HTML served on `localhost`, you can lean on your agent's built‑in browser preview and element‑annotation tools (e.g. Cursor's browser / DevTools). Point at a button in the live preview, say what you want changed, and the agent edits the underlying source — a tight, visual second‑pass editing loop that's hard to get on a website.
+- **Iterate by pointing, not describing.** Because the deliverable is plain HTML served on `localhost`, you can lean on your agent's built‑in browser preview and element‑annotation tools (Cursor Browser / DevTools, Claude Preview, or Codex Browser). Point at a button in the live preview, say what you want changed, and the agent edits the underlying source — a tight, visual second‑pass editing loop that's hard to get on a website.
 - **Everything is yours.** Output lands in `designs/<project>/` as self‑contained HTML you can version, fork, export, or ship.
 
 ---
@@ -48,12 +48,13 @@ skills/baoyu-design/
 ├── system-prompt.md      # The design methodology & craft standards (source of truth)
 ├── references/
 │   ├── claude.md         # Tool map for Claude Code
-│   └── cursor.md         # Tool map for Cursor
+│   ├── cursor.md         # Tool map for Cursor
+│   └── codex.md          # Tool map for Codex Agent
 ├── built-in-skills/      # 24 specialized prompts (decks, mobile, export, …)
 └── starter-components/   # Device frames, deck stage, canvas, animation engine, …
 ```
 
-When you ask for a design, the agent reads `SKILL.md`, loads the core methodology from `system-prompt.md`, detects whether it's running in Cursor or Claude Code and reads the matching reference doc, then pulls in only the built‑in skill(s) the task needs. The split keeps craft rules harness‑independent while each environment resolves its own tools for *asking questions*, *previewing*, *screenshotting*, and *verifying*.
+When you ask for a design, the agent reads `SKILL.md`, loads the core methodology from `system-prompt.md`, detects whether it's running in Cursor, Claude Code, Codex Agent, or a generic file‑capable harness, and reads the matching reference doc when one exists. It then pulls in only the built‑in skill(s) the task needs. The split keeps craft rules harness‑independent while each environment resolves its own tools for *asking questions*, *previewing*, *screenshotting*, and *verifying*.
 
 ---
 
@@ -61,7 +62,7 @@ When you ask for a design, the agent reads `SKILL.md`, loads the core methodolog
 
 ### Prerequisites
 
-- A local agent — **[Cursor](https://cursor.com)**, **[Claude Code](https://claude.com/claude-code)**, or any of the 70+ agents the installer supports (Codex, Cline, Roo Code, GitHub Copilot…). Cursor and Claude Code have first‑class tool references inside the skill.
+- A local agent — **[Cursor](https://cursor.com)**, **[Claude Code](https://claude.com/claude-code)**, **[Codex](https://developers.openai.com/codex/)**, or any of the 70+ agents the installer supports (Cline, Roo Code, GitHub Copilot…). Cursor, Claude Code, and Codex have first‑class tool references inside the skill.
 - **Claude Opus 4.8** selected as the model, for best results.
 - **Node.js** (to run the `npx` installer below). **Python 3** is also handy for the local preview server.
 
@@ -79,12 +80,13 @@ npx skills add JimLiu/baoyu-design -g
 # Target a specific agent explicitly
 npx skills add JimLiu/baoyu-design --agent claude-code
 npx skills add JimLiu/baoyu-design --agent cursor
+npx skills add JimLiu/baoyu-design --agent codex
 
 # Just list what's in the repo first
 npx skills add JimLiu/baoyu-design --list
 ```
 
-It installs to `.claude/skills/` for Claude Code and `.agents/skills/` for Cursor (add `-g` for the `~/`‑level user install).
+It installs to `.claude/skills/` for Claude Code and `.agents/skills/` for Cursor/Codex-style agents (add `-g` for the `~/`‑level user install).
 
 **Alternative — hand the repo URL to your agent.** Don't want to install anything? Paste the URL into chat and let the agent fetch the skill itself:
 
@@ -98,7 +100,7 @@ Once the skill is installed (or fetched), just describe a design task in plain l
 
 > Design 3 hi‑fi variations of a settings screen for a meditation app.
 
-In Claude Code you can also trigger it explicitly with `/baoyu-design`. The agent asks a few clarifying questions, builds the HTML under `designs/`, and previews it over `localhost`. **Point at any element in the live preview and say what to change** — the agent edits the underlying source for a fast, visual second pass.
+In Claude Code you can also trigger it explicitly with `/baoyu-design`; in Codex, mention `$baoyu-design` when skills are available. The agent asks a few clarifying questions, builds the HTML under `designs/`, and previews it over `localhost`. **Point at any element in the live preview and say what to change** — the agent edits the underlying source for a fast, visual second pass.
 
 ### Preview server
 
