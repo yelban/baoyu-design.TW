@@ -14,9 +14,62 @@ No website, no separate subscription, no upload step. The agent already on your 
 
 ## Screenshots
 
-| Cursor | Codex | Claude |
-|---|---|---|
-| <img src="assets/screenshots/cursor-reader-mac-app.jpeg" alt="Cursor running baoyu-design" width="320"> | <img src="assets/screenshots/codex-reader-mac-app.png" alt="Codex running baoyu-design" width="320"> | <img src="assets/screenshots/claude-reader-mac-app.png" alt="Claude running baoyu-design" width="320"> |
+The same Reader Mac App prompt was used in Cursor, Codex, Claude, and Claude Design.
+
+| Cursor | Codex | Claude | Claude Design |
+|---|---|---|---|
+| <img src="assets/screenshots/cursor-reader-mac-app.jpeg" alt="Cursor running baoyu-design" width="240"> | <img src="assets/screenshots/codex-reader-mac-app.png" alt="Codex running baoyu-design" width="240"> | <img src="assets/screenshots/claude-reader-mac-app.png" alt="Claude running baoyu-design" width="240"> | <img src="assets/screenshots/claude-design-reader-mac-app.png" alt="Claude Design running the same Reader Mac App prompt" width="240"> |
+
+<details>
+<summary>Prompt used for all screenshots</summary>
+
+```markdown
+Build a Reader Mac app that helps me read and save articles better. All data is stored locally.
+
+## Information collection
+
+1. Manual adding
+Support manually adding different types of information:
+- URL: enter a URL and automatically fetch content and images
+- Attachments: upload PDFs, videos, and images
+- Markdown editing: like publishing a blog post, enter the title, body, and cover image
+- Other
+
+2. Automatic subscriptions
+- RSS feeds
+- Social media accounts: X, Weibo, YouTube
+- Other
+
+## Editing and organization
+
+1. Tags
+Every item can have tags.
+
+2. Categories and folders
+Create tree-structured folders and place content in different categories.
+
+3. Favorites
+Users can click to favorite an item.
+
+4. Editing
+Every item can be edited with a built-in Markdown editor.
+
+## AI assistance
+
+1. Automatic translation
+Support translation across different languages.
+
+2. Summaries and abstracts
+Generate summaries for captured content.
+
+3. Derivative creation
+Create new work based on one or more pieces of content.
+
+4. Integrated AI Chat
+Use AI Chat to call AI Agents that help process content.
+```
+
+</details>
 
 ---
 

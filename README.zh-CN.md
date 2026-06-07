@@ -14,9 +14,63 @@
 
 ## 截图
 
-| Cursor | Codex | Claude |
-|---|---|---|
-| <img src="assets/screenshots/cursor-reader-mac-app.jpeg" alt="Cursor 运行 baoyu-design" width="320"> | <img src="assets/screenshots/codex-reader-mac-app.png" alt="Codex 运行 baoyu-design" width="320"> | <img src="assets/screenshots/claude-reader-mac-app.png" alt="Claude 运行 baoyu-design" width="320"> |
+Cursor、Codex、Claude 和 Claude Design 使用的是同一个 Reader Mac App Prompt。
+
+| Cursor | Codex | Claude | Claude Design |
+|---|---|---|---|
+| <img src="assets/screenshots/cursor-reader-mac-app.jpeg" alt="Cursor 运行 baoyu-design" width="240"> | <img src="assets/screenshots/codex-reader-mac-app.png" alt="Codex 运行 baoyu-design" width="240"> | <img src="assets/screenshots/claude-reader-mac-app.png" alt="Claude 运行 baoyu-design" width="240"> | <img src="assets/screenshots/claude-design-reader-mac-app.png" alt="Claude Design 使用同一 Reader Mac App Prompt 的效果" width="240"> |
+
+<details>
+<summary>展开查看共同使用的 Prompt</summary>
+
+```markdown
+帮我开发一款Reader Mac App，帮助我更好的阅读和收藏文章。数据都在本地。
+
+## 信息采集
+
+1. 主动添加
+可以手动添加不同类型的信息：
+- URL：输入 URL，自动抓取内容和图片
+- 附件：上传PDF、视频、图片
+- Markdown 编辑：类似于发布博客，输入标题、内容、发布图片
+- 其他
+
+2. 自动订阅
+- RSS 订阅
+- 社交媒体账号：X、微博、YouTube
+- 其他
+
+## 信息编辑和分类
+
+1. 标签
+每条内容都可以打标签
+
+2. 分类、目录
+可以创建树形目录，可以把内容放到不同的分类
+
+3. 收藏
+可以点击收藏
+
+4. 编辑
+每一条内容都可以编辑，有个内置的Markdown编辑
+
+## AI 辅助
+
+1. 自动翻译
+可以支持不同语言的翻译
+
+2. 总结和摘要
+可以去对抓取了的内容进行摘要
+
+3. 二次创作
+可以基于一条或者多条内容进行二次创作
+
+4. 集成 AI Chat
+
+可以通过 AI Chat 去调用 AI Agent 辅助对内容进行处理
+```
+
+</details>
 
 ---
 
