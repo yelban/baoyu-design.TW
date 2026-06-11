@@ -679,6 +679,37 @@ function classifyCdnScript(src) {
   return null;
 }
 
+// Bare string literals like `const PHOTO = "../assets/x.jpg"` (used via src={PHOTO})
+// carry no attribute name, so match by shape: relative/rooted path + asset extension.
+const STR_REF_RE =
+  /(["'])((?:\.{1,2})?\/[^"'\n]*?\.(?:png|jpe?g|gif|svg|webp|avif|ico|bmp|mp4|webm|mp3|wav|woff2?|ttf|otf))\1/gi;
+
+async function rewriteScriptStringRefs(code, baseDir, ctx) {
+  const refs = [];
+  code.replace(STR_REF_RE, (m, q, ref) => {
+    refs.push(ref);
+    return m;
+  });
+  const resolved = new Map();
+  for (const ref of refs) {
+    if (resolved.has(ref)) continue;
+    const abs = resolveRef(ref, baseDir, ctx.root);
+    // only swap in a successful inline — a miss may be a non-asset string, so keep it verbatim
+    resolved.set(ref, abs ? await ctx.inlineAsset(abs) : null);
+  }
+  return code.replace(STR_REF_RE, (m, q, ref) => {
+    const r = resolved.get(ref);
+    return r ? q + r + q : m;
+  });
+}
+
+// script code is re-rooted into the single preview file, so both JSX/markup
+// attributes and bare string-literal refs need the same inlining as bodyHtml
+async function rewriteScriptAssets(code, baseDir, ctx) {
+  const out = await rewriteMarkupAssets(code, baseDir, ctx, { rewriteEvents: false });
+  return rewriteScriptStringRefs(out, baseDir, ctx);
+}
+
 async function rewriteMarkupAssets(html, baseDir, ctx, { rewriteEvents = true } = {}) {
   const ATTR_RE = /\b(src|poster|href)\s*=\s*("([^"]*)"|'([^']*)')/gi;
   const refs = [];
@@ -810,10 +841,8 @@ async function parseCardHtml(absPath, ctx) {
         warn("script not found: " + src);
         continue;
       }
-      // script code is re-rooted into the single file too — quoted src/poster/href
-      // refs (JSX <img src="…">, el.src = "…") would break, so inline them like bodyHtml
       card.scripts.push({
-        code: await rewriteMarkupAssets(code, path.dirname(abs), ctx, { rewriteEvents: false }),
+        code: await rewriteScriptAssets(code, path.dirname(abs), ctx),
         babel: isBabel,
         name: path.basename(abs),
       });
@@ -824,7 +853,7 @@ async function parseCardHtml(absPath, ctx) {
     if (type && !isBabel && type !== "text/javascript" && type !== "module" && type !== "application/javascript")
       continue; // json templates etc.
     card.scripts.push({
-      code: await rewriteMarkupAssets(inner, dir, ctx, { rewriteEvents: false }),
+      code: await rewriteScriptAssets(inner, dir, ctx),
       babel: isBabel,
       name: null,
     });

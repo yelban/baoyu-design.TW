@@ -84,14 +84,15 @@ Use AI Chat to call AI Agents that help process content.
 
 ## What it can make
 
-The skill drives a full design process — clarifying questions → gathering design context → producing one or more HTML deliverables → previewing and verifying. It ships **24 built‑in skills** and a set of ready‑made component scaffolds.
+The skill drives a full design process — clarifying questions → gathering design context → producing one or more HTML deliverables → previewing and verifying. It ships a deep bench of **built‑in skills** and a set of ready‑made component scaffolds.
 
 | Area | Built‑in skills |
 |---|---|
 | **Core design** | Hi‑fi design · Interactive prototype · Wireframe · Frontend aesthetic direction |
 | **Decks** | Make a deck · Speaker notes |
 | **Mobile & motion** | Mobile prototype · Animated video · Sound effects |
-| **Design systems** | Create design system · Design Components (`.dc.html`) · Make tweakable |
+| **Design systems** | Create design system · Use design system · Design system preview · Design Components (`.dc.html`) · Make tweakable |
+| **Import sources** | Figma `.fig` (offline decode) · GitHub repo · Existing HTML/CSS |
 | **Export & handoff** | Standalone HTML · PDF · PPTX (editable) · PPTX (screenshots) · Send to Figma · Send to Canva · Handoff to Claude Code |
 | **AI assets & integration** | Gemini image generation · Call Claude from prototypes · Read PDF |
 
@@ -176,7 +177,7 @@ python3 -m http.server 4311 --directory designs
 
 ## Design systems
 
-Beyond one‑off mockups, the skill can hold a whole project to a **design system** — a versioned bundle of a brand's tokens, fonts, components, and full UI kits. Systems live next to your projects under `designs/`: author one with the *Create design system* built‑in skill, or drop in a pre‑built one. Once a system exists, two flows let any project consume it.
+Beyond one‑off mockups, the skill can hold a whole project to a **design system** — a versioned bundle of a brand's tokens, fonts, components, and full UI kits. Systems live next to your projects under `designs/`: author one with the *Create design system* built‑in skill, drop in a pre‑built one, or import one from a Figma `.fig` file (see the next section). Once a system exists, two flows let any project consume it.
 
 ### Import an existing design system
 
@@ -194,6 +195,20 @@ The binding travels with the project. Reopen it later and the agent reads `_d_me
 
 ---
 
+## Import design sources
+
+Real context beats description. Three built‑in import skills turn material you already have into design ground truth the agent works from directly:
+
+- **Figma `.fig` files — decoded fully offline.** Export any Figma file as `.fig` (or grab a community kit), point the agent at it, and a vendored decoder reads it right on your machine — no Figma account, API token, or MCP server. The agent inventories pages, components, and variables, confirms scope with you, then either cherry‑picks components as React code or emits the whole kit as a design system: components regrouped semantically, curated token CSS, real SVG/PNG assets extracted from the file (copied, never redrawn), guideline cards, and a brand‑guide README.
+- **GitHub repos.** Hand it a repo URL as a design source. The agent browses the tree with `gh api` before cloning anything, sparse‑checkouts only the paths it needs into a scratch dir outside your project, and records the repo URL as provenance.
+- **Existing HTML/CSS.** Saved pages or a local codebase work as a design reference: the agent reads the real stylesheets instead of squinting at screenshots, lifts exact values (colors, type, spacing, radii, shadows, interaction states) into your project's own custom properties, and copies referenced assets out.
+
+Anything imported as a design system compiles into a single self‑contained, interactive `preview.html`. This is the community **Chakra UI Figma Kit** `.fig` after one import conversation — 28 components in semantic groups, 400+ curated tokens, guideline cards, and a self‑authored showcase, all browsable in one file:
+
+<img src="assets/screenshots/figma-import-chakra-preview.webp" alt="preview.html of a design system imported from the Chakra UI Figma Kit .fig" width="720">
+
+---
+
 ## Example prompts
 
 - *"Design 3 hi‑fi variations of a pricing page using the brand in this screenshot."*
@@ -201,9 +216,10 @@ The binding travels with the project. Reopen it later and the agent reads `_d_me
 - *"Make a 10‑slide deck from this PRD for an engineering all‑hands."*
 - *"Wireframe a few layout ideas for a mobile expense‑tracker home screen."*
 - *"Recreate the composer UI from this codebase, then export it as standalone HTML."*
+- *"Turn this UI kit `.fig` into a design system, then build a dashboard with it."*
 - *"Build a dashboard using our design system, starting from its analytics screen."*
 
-For best results, **give it design context** — a screenshot, a UI kit, a Figma link, or a codebase. Starting from real context is the single biggest lever on quality; the skill will ask for it if you don't provide it.
+For best results, **give it design context** — a screenshot, a UI kit, a Figma `.fig` export, or a codebase. Starting from real context is the single biggest lever on quality; the skill will ask for it if you don't provide it.
 
 ---
 
