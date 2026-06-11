@@ -1565,7 +1565,9 @@ async function main() {
     }
   }
   if (!manifest || (!manifest.cards?.length && !manifest.startingPoints?.length && !manifest.templates?.length)) {
-    info("no usable manifest — scanning for @dsCard files…");
+    info(manifest
+      ? "manifest has no cards, starting points, or templates — scanning for @dsCard files…"
+      : "no manifest (run compile-design-system.mjs to generate one) — scanning for @dsCard files…");
     manifest = { cards: await scanForCards(root) };
   }
 

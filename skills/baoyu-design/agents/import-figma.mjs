@@ -91,6 +91,18 @@ const toPosix = (p) => p.split(path.sep).join('/');
 const rel = (p) => toPosix(path.relative(process.cwd(), p)) || '.';
 const mb = (n) => (n / 1048576).toFixed(1) + ' MB';
 
+// Printed command hints must be copy-pasteable: quote anything a shell would
+// split, and refer to this script (and its siblings) by a real path instead of
+// assuming the agents/ directory is the cwd.
+const sh = (p) => (/[^A-Za-z0-9_@%+=:,./-]/.test(p) ? `'${p.replace(/'/g, "'\\''")}'` : p);
+const nicePath = (abs) => {
+  const r = rel(abs);
+  return r.length <= abs.length ? r : toPosix(abs);
+};
+const selfScript = () => sh(nicePath(path.resolve(process.argv[1] ?? 'import-figma.mjs')));
+const siblingScript = (name) =>
+  sh(nicePath(path.join(path.dirname(path.resolve(process.argv[1] ?? '.')), name)));
+
 async function loadFig(fileArg) {
   const file = path.resolve(fileArg);
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) die(`not a file: ${fileArg}`);
@@ -209,7 +221,7 @@ const cssHasRules = (css) => /\{/.test(css ?? '');
 function refuseNonEmpty(dir, force) {
   if (force) return;
   if (fs.existsSync(dir) && fs.readdirSync(dir).length > 0) {
-    die(`${rel(dir)} already exists and is not empty — pass --force to overwrite into it`);
+    die(`${nicePath(dir)} already exists and is not empty — pass --force to overwrite into it`);
   }
 }
 
@@ -222,32 +234,45 @@ function writeFileEnsured(abs, data) {
 // .jsx/.d.ts pairs (design-system mode puts them under components/).
 function writeEmitted(outDir, r, { componentsSubdir = '', tokensSubdir = '' } = {}) {
   const written = [];
+  // The emitter dedupes names case-insensitively, so this should never fire —
+  // but if two emitted paths ever differ only by case again, a case-insensitive
+  // filesystem (macOS/Windows default) silently keeps just the later file.
+  // Track folded paths so that data loss is reported instead of silent.
+  const byFolded = new Map();
+  const clobbered = [];
+  const track = (relPath) => {
+    const key = relPath.normalize('NFC').toLowerCase();
+    const prev = byFolded.get(key);
+    if (prev !== undefined && prev !== relPath) clobbered.push(`${prev} ↔ ${relPath}`);
+    else byFolded.set(key, relPath);
+    written.push(relPath);
+  };
   for (const f of r.files) {
     const dest = path.join(outDir, componentsSubdir, f.path);
     writeFileEnsured(dest, f.content);
-    written.push(toPosix(path.join(componentsSubdir, f.path)));
+    track(toPosix(path.join(componentsSubdir, f.path)));
   }
   for (const a of r.assets ?? []) {
     const name = a.filename ?? path.basename(a.path ?? 'asset.bin');
     writeFileEnsured(path.join(outDir, 'assets', name), Buffer.from(a.bytes));
-    written.push(`assets/${name}`);
+    track(`assets/${name}`);
   }
   // assets.css resolves url(./assets/…) relative to itself → must sit next to assets/.
   if (cssHasRules(r.assetsCss)) {
     writeFileEnsured(path.join(outDir, 'fig-assets.css'), r.assetsCss);
-    written.push('fig-assets.css');
+    track('fig-assets.css');
   }
   if (cssHasRules(r.tokensCss)) {
     const p = path.join(tokensSubdir, 'fig-tokens.css');
     writeFileEnsured(path.join(outDir, p), annotateTokenKinds(r.tokensCss).css);
-    written.push(toPosix(p));
+    track(toPosix(p));
   }
   if (cssHasRules(r.typographyCss)) {
     const p = path.join(tokensSubdir, 'fig-typography.css');
     writeFileEnsured(path.join(outDir, p), r.typographyCss);
-    written.push(toPosix(p));
+    track(toPosix(p));
   }
-  return written;
+  return { written, clobbered };
 }
 
 // Add `/* @kind other */` to token declarations the checker can't classify by
@@ -361,9 +386,9 @@ async function cmdOutline(positional, flags) {
   out.push(`Styles: ${data.styles.count} shared text/effect style(s)`);
   out.push('');
   out.push('Next:');
-  out.push(`  reference    node import-figma.mjs mount "${fileArg}" <projectDir>`);
-  out.push(`  cherry-pick  node import-figma.mjs materialize "${fileArg}" --out <dir> --frames <guid>`);
-  out.push(`  full system  node import-figma.mjs design-system "${fileArg}" designs/<slug>`);
+  out.push(`  reference    node ${selfScript()} mount ${sh(fileArg)} <projectDir>`);
+  out.push(`  cherry-pick  node ${selfScript()} materialize ${sh(fileArg)} --out <dir> --frames <guid>`);
+  out.push(`  full system  node ${selfScript()} design-system ${sh(fileArg)} designs/<slug>`);
   console.log(out.join('\n'));
 }
 
@@ -426,10 +451,10 @@ async function cmdMount(positional, flags) {
   writeFileEnsured(path.join(destRoot, 'node-index.json'), JSON.stringify(index, null, 2) + '\n');
 
   const out = [];
-  out.push(`Mounted "${path.basename(file)}" → ${rel(destRoot)}/  (${files} files, ${dirs} dirs, ${mb(bytes)})`);
+  out.push(`Mounted "${path.basename(file)}" → ${nicePath(destRoot)}/  (${files} files, ${dirs} dirs, ${mb(bytes)})`);
   out.push('');
   out.push('This is a read-only reference tree decoded from the .fig — not project deliverables.');
-  out.push(`Start with ${rel(destRoot)}/README.md, then Read/Grep the per-page frame and component JSX.`);
+  out.push(`Start with ${nicePath(destRoot)}/README.md, then Read/Grep the per-page frame and component JSX.`);
   out.push('Node guids live in node-index.json and in the `// figma node:` comment atop each .jsx —');
   out.push('use them with `materialize --components/--frames` (real code) and `render --frame` (visual ground truth).');
   console.log(out.join('\n'));
@@ -469,15 +494,16 @@ async function cmdMaterialize(positional, flags) {
   }
 
   const outDir = path.resolve(flags['--out']);
-  const written = writeEmitted(outDir, r);
+  const { written, clobbered } = writeEmitted(outDir, r);
 
   const out = [];
-  out.push(`Materialized ${r.emitted.length} component(s)${r.frameNames.length ? ` + ${r.frameNames.length} frame(s)` : ''} → ${rel(outDir)}/  (${written.length} files)`);
+  out.push(`Materialized ${r.emitted.length} component(s)${r.frameNames.length ? ` + ${r.frameNames.length} frame(s)` : ''} → ${nicePath(outDir)}/  (${written.length} files)`);
+  if (clobbered.length) out.push(`  WARNING: ${clobbered.length} on-disk name collision(s) — this filesystem kept only the later file of: ${clobbered.slice(0, 4).join(', ')}`);
   if (r.frameNames.length) out.push(`  frames: ${r.frameNames.join(', ')}`);
   out.push(`  components: ${r.emitted.slice(0, 12).join(', ')}${r.emitted.length > 12 ? ` … +${r.emitted.length - 12} more` : ''}`);
   out.push(`  node ids: ${Object.entries(r.nodeIds).slice(0, 6).map(([n, g]) => `${n}=${g}`).join(', ')}${Object.keys(r.nodeIds).length > 6 ? ' …' : ''}`);
   if (r.missing?.length) out.push(`  UNRESOLVED (skipped): ${r.missing.join(', ')}`);
-  if (r.fonts?.length) out.push(`  fonts used: ${r.fonts.join(', ')} — .fig files carry no font binaries; add @font-face/CDN links or substitute.`);
+  if (r.fonts?.length) out.push(`  fonts used by the emitted components: ${r.fonts.join(', ')} — .fig files carry no font binaries; add @font-face/CDN links or substitute.`);
   if (r.warnings?.length) {
     out.push('  warnings:');
     out.push(...warningLines(r.warnings).map((l) => '  ' + l));
@@ -503,7 +529,7 @@ async function cmdRender(positional, flags) {
   writeFileEnsured(outFile, r.html);
 
   const out = [];
-  out.push(`Rendered "${node?.name ?? guid}" (${guid}) → ${rel(outFile)}  (${mb(r.html.length)}, ${r.images?.length ?? 0} image(s) inlined)`);
+  out.push(`Rendered "${node?.name ?? guid}" (${guid}) → ${nicePath(outFile)}  (${mb(r.html.length)}, ${r.images?.length ?? 0} image(s) inlined)`);
   if (r.warnings?.length) {
     out.push('  warnings:');
     out.push(...warningLines(r.warnings).map((l) => '  ' + l));
@@ -541,7 +567,7 @@ async function cmdDesignSystem(positional, flags) {
   const destRoot = path.resolve(destArg);
   refuseNonEmpty(destRoot, flags['--force']);
 
-  const written = writeEmitted(destRoot, r, { componentsSubdir: 'components', tokensSubdir: 'tokens' });
+  const { written, clobbered } = writeEmitted(destRoot, r, { componentsSubdir: 'components', tokensSubdir: 'tokens' });
   const hasTokens = written.includes('tokens/fig-tokens.css');
   const hasTypography = written.includes('tokens/fig-typography.css');
   const hasAssetsCss = written.includes('fig-assets.css');
@@ -563,13 +589,14 @@ async function cmdDesignSystem(positional, flags) {
   fs.writeFileSync(path.join(destRoot, 'README.md'), buildDsReadme({ title, file, fig, comps, r }));
 
   const out = [];
-  out.push(`Design system emitted → ${rel(destRoot)}/`);
+  out.push(`Design system emitted → ${nicePath(destRoot)}/`);
   out.push(
     `  ${r.emitted.length} component(s) (${comps.filter((c) => c.variants > 0).length} variant sets), ` +
     `${r.tokenCount} token(s)${r.tokenModes?.length > 1 ? ` × ${r.tokenModes.length} modes` : ''}, ` +
     `${r.textStyleCount} text style(s), ${r.effectStyleCount} effect style(s), ${r.assets?.length ?? 0} asset(s)`,
   );
-  if (r.fonts?.length) out.push(`  fonts used: ${r.fonts.join(', ')} — add @font-face/CDN links (no binaries in a .fig) or substitute and note it.`);
+  if (clobbered.length) out.push(`  WARNING: ${clobbered.length} on-disk name collision(s) — this filesystem kept only the later file of: ${clobbered.slice(0, 4).join(', ')}`);
+  if (r.fonts?.length) out.push(`  fonts used by the emitted components: ${r.fonts.join(', ')} — add @font-face/CDN links (no binaries in a .fig) or substitute and note it.`);
   if (r.warnings?.length) {
     out.push('  import warnings:');
     out.push(...warningLines(r.warnings).map((l) => '  ' + l));
@@ -578,9 +605,9 @@ async function cmdDesignSystem(positional, flags) {
   out.push('This folder follows the authoring convention but is NOT compiled or curated yet. Next:');
   out.push('  1. read built-in-skills/design-system-authoring-guide.md — rewrite README.md into a real');
   out.push('     usage guide, add <Name>.prompt.md files and @dsCard card HTMLs for the key components');
-  out.push(`  2. node <skill>/agents/compile-design-system.mjs ${rel(destRoot)}`);
-  out.push(`  3. node <skill>/agents/check-design-system.mjs ${rel(destRoot)}   (fix → recompile → repeat)`);
-  out.push(`  4. node <skill>/agents/build-preview.mjs ${rel(destRoot)}`);
+  out.push(`  2. node ${siblingScript('compile-design-system.mjs')} ${sh(nicePath(destRoot))}`);
+  out.push(`  3. node ${siblingScript('check-design-system.mjs')} ${sh(nicePath(destRoot))}   (fix → recompile → repeat)`);
+  out.push(`  4. node ${siblingScript('build-preview.mjs')} ${sh(nicePath(destRoot))}`);
   console.log(out.join('\n'));
 }
 
@@ -633,11 +660,11 @@ function buildDsReadme({ title, file, fig, comps, r }) {
   }
 
   if (r.fonts?.length) {
-    lines.push('## Fonts');
+    lines.push('## Fonts (used by the emitted components)');
     lines.push('');
     for (const f of r.fonts) lines.push(`- ${f}`);
     lines.push('');
-    lines.push('A .fig file carries no font binaries. Add `@font-face` files or a CDN `<link>` for these families, or pick substitutes and note them here.');
+    lines.push('A .fig file carries no font binaries. Add `@font-face` files or a CDN `<link>` for these families, or pick substitutes and note them here. (The metadata font histogram above counts every text node in the file — including text outside any component — so it can list extra families that no component uses.)');
     lines.push('');
   }
 
