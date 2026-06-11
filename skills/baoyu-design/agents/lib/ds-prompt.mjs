@@ -5,8 +5,9 @@
 // every stylesheet in the @import closure, the bundle, and how the page's own
 // JSX runs through Babel standalone), the source-tree pointer, the full guide
 // inlined, the first lines of each component's *.prompt.md
-// (<ds-prompt-excerpts> — those files are not bound into _ds/), and the exact
-// var(--*) token allowlist.
+// (<ds-prompt-excerpts> — those files are not bound into _ds/), the per-component
+// prop contracts with full enum value lists (<ds-component-props>), and the
+// exact var(--*) token allowlist.
 // Project-relative `_ds/<slug>/` paths for the runtime copy; the recorded
 // `sourcePath` for the system's source (mocks/ui_kits/component source).
 //
@@ -51,6 +52,14 @@ export function extractPromptExcerpt(text, maxLines = 5) {
   return slice.join('\n');
 }
 
+// one-line type display for non-enum props: collapse whitespace, fold function
+// signatures, cap length — value lists never pass through here
+function compactType(type) {
+  const t = String(type ?? '').replace(/\s+/g, ' ').trim();
+  if (/^\(.*\)\s*=>/.test(t)) return 'function';
+  return t.length > 40 ? `${t.slice(0, 37)}…` : t;
+}
+
 export function renderDsPrompt({
   name,
   slug,
@@ -58,6 +67,7 @@ export function renderDsPrompt({
   globalCssPaths = [],
   componentNames = [],
   componentPrompts = [],
+  componentProps = [],
   readme = '',
   tokenNames = [],
   sourcePath = '',
@@ -140,6 +150,16 @@ export function renderDsPrompt({
       out.push(`  ReactDOM.createRoot(document.getElementById('root')).render(<${sampleNames[0]} />);`);
       out.push('</script>');
       out.push('```');
+      out.push('');
+      out.push(
+        'In text/babel blocks, never give a top-level binding a window-global name — `status`, ' +
+        '`name`, `open`, `close`, `top`, `self`, `parent`, `origin`, `event`, `length`, ' +
+        '`location`, `history`, `screen`, `scroll`, `stop`, `print`, `focus`, `blur`, `frames`, ' +
+        '`closed`, `opener`. Babel injects the transpiled code as a classic script (top-level ' +
+        'const/let become var), so `const status = …` writes `window.status`, which coerces or ' +
+        'misbehaves, and the page dies with an error the console may never show. Use a longer ' +
+        'name (`statusBadge`, `openItems`).',
+      );
     } else if (hasBundle) {
       out.push(
         'The bundle is plain compiled JS — load it with a regular `<script>` (no ' +
@@ -192,6 +212,33 @@ export function renderDsPrompt({
       out.push(excerpt);
     });
     out.push('</ds-prompt-excerpts>');
+  }
+
+  // per-component prop contracts — names are exhaustive, enum value lists are
+  // complete and never truncated; `*` marks the declared @default
+  const propRows = (Array.isArray(componentProps) ? componentProps : [])
+    .filter((c) => c && c.kind !== 'constant' && Array.isArray(c.props) && c.props.length);
+  if (propRows.length) {
+    out.push('');
+    out.push(
+      'Prop contracts per component (from each `.d.ts`). Prop names are exhaustive — do not ' +
+      'invent props. Enum props list every allowed value; `*` marks the default. Never pass a ' +
+      'value outside these lists:',
+    );
+    out.push('');
+    out.push('<ds-component-props>');
+    for (const c of propRows) {
+      const parts = c.props.map((p) => {
+        if (Array.isArray(p.values) && p.values.length) {
+          const vals = p.values.map((v) => (p.default === v ? `${v}*` : v)).join(' | ');
+          return `${p.name}: ${vals}`;
+        }
+        const t = compactType(p.type) || 'any';
+        return p.default !== undefined ? `${p.name}: ${t} (default ${p.default})` : `${p.name}: ${t}`;
+      });
+      out.push(`${c.name} — ${parts.join(' · ')}`);
+    }
+    out.push('</ds-component-props>');
   }
 
   // token allowlist — the enforceable guardrail
