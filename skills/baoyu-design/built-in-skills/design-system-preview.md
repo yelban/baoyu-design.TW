@@ -4,7 +4,7 @@ description: "Compile a design system directory (one with _ds_manifest.json and/
 ---
 # Design system → single-file preview.html
 
-Reproduces the claude.ai/design "Design system" review pane as ONE static HTML
+Builds the design-system review pane as ONE static HTML
 file: 248px outline nav (pinned Readme + collapsible groups + scrollspy) and a
 content column (max-width 760px) with the rendered Readme and one live,
 interactive preview card per manifest entry.

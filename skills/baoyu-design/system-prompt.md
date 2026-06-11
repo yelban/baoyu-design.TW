@@ -258,5 +258,6 @@ You have the following built-in skill prompts, located in the `built-in-skills/`
 - **[Save as standalone HTML](built-in-skills/save-as-standalone-html.md)** — Single self-contained file that works offline
 - **[Send to Canva](built-in-skills/send-to-canva.md)** — Export as an editable Canva design
 - **[Send to Figma](built-in-skills/send-to-figma.md)** — Export as an editable Figma design
+- **[Import from Figma](built-in-skills/import-from-figma.md)** — Import a local `.fig` file as a design reference or a full design system (offline decoder; no Figma MCP needed)
 - **[Handoff to Claude Code](built-in-skills/handoff-to-claude-code.md)** — Developer handoff package
 - **[Mobile prototype](built-in-skills/mobile-prototype.md)** — Pin-to-home-screen-ready mobile prototype
