@@ -93,7 +93,7 @@ The skill drives a full design process — clarifying questions → gathering de
 | **Mobile & motion** | Mobile prototype · Animated video · Sound effects |
 | **Design systems** | Create design system · Use design system · Design system preview · Design Components (`.dc.html`) · Make tweakable |
 | **Import sources** | Figma `.fig` (offline decode) · GitHub repo · Existing HTML/CSS |
-| **Export & handoff** | Standalone HTML · PDF · PPTX (editable) · PPTX (screenshots) · Send to Figma · Send to Canva · Handoff to Claude Code |
+| **Export & handoff** | Standalone HTML · PDF · PPTX (editable) · PPTX (screenshots) · Video (MP4) · Send to Figma · Send to Canva · Handoff to Claude Code |
 | **AI assets & integration** | Gemini image generation · Call Claude from prototypes · Read PDF |
 
 **Starter components** (in [`starter-components/`](skills/baoyu-design/starter-components/)) save the agent from hand‑rolling the basics: iOS / Android / macOS / browser frames, a pan‑zoom design canvas, a slide‑deck stage, a timeline animation engine, a tweaks panel, and a fillable image slot.

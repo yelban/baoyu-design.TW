@@ -94,7 +94,7 @@ Cursor、Codex、Claude 和 Claude Design 使用的是同一个 Reader Mac App P
 | **移动与动效** | 移动端原型 · 动画视频 · 音效 |
 | **设计系统** | 创建设计系统 · 使用设计系统 · 设计系统预览 · 设计组件（`.dc.html`）· 可调参数化 |
 | **导入设计源** | Figma `.fig`（离线解码）· GitHub 仓库 · 现成 HTML/CSS |
-| **导出与交付** | 独立 HTML · PDF · PPTX（可编辑）· PPTX（截图）· 导出到 Figma · 导出到 Canva · 交接给 Claude Code |
+| **导出与交付** | 独立 HTML · PDF · PPTX（可编辑）· PPTX（截图）· 视频（MP4）· 导出到 Figma · 导出到 Canva · 交接给 Claude Code |
 | **AI 素材与集成** | Gemini 图像生成 · 在原型中调用 Claude · 读取 PDF |
 
 **起步组件**（位于 [`starter-components/`](skills/baoyu-design/starter-components/)）让 Agent 不必从零手搓基础件：iOS / Android / macOS / 浏览器外壳、可平移缩放的设计画布、幻灯片舞台、时间轴动画引擎、参数调节面板，以及可填充的图片占位槽。
